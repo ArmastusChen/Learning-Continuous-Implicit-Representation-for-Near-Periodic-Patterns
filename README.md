@@ -1,4 +1,4 @@
-# Learning Continuous Implicit Representation for Near-Periodic Patterns
+# Learning Continuous Implicit Representation for Near-Periodic Patterns (ECCV 2022)
 
 
 ## Get started
@@ -13,17 +13,6 @@ pip install -r requirements.txt
 * data: input examples for completion, remapping, and segmentation.
 * externel_lib: externel library to support our code.
 * NPP_completion: implementation for completion task. 
-* NPP_remapping: implementation for remapping task. 
-* NPP_segmentation: implementation for segmentation task. 
-* periodicity_searching: implementation for top-K periodicity searching.
-
-## How to Run
-
-1. Please go to this repository (https://github.com/42x00/p3i) and download the pre-trained AlexNet weight in the "Pre-trained Models" section. 
-
-2. Put the downloaded file (alexnet-owt-4df8aa71.pth) in the root of this directory. 
-
-
 
 
 ### NPP Completion
