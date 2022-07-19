@@ -23,8 +23,7 @@ Run all examples in the "data/completion/input" using the following command.
 bash run_completion.sh
 ```
 
-This script first searches the periodicity of the image, saved in "data/completion/detected". 
-Then it performs image completion, generating the outputs in "results/completion_top3". 
+This script performs image completion, generating the outputs in "results/completion_top3". 
 
 The good results for each example can be achieved in 2400 epochs (testset_002400).
 
