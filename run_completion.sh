@@ -9,5 +9,6 @@ do
     name=$(basename "$input_file")
     echo $input_file
     echo "${detected_path}/${name}"
-    CUDA_VISIBLE_DEVICES="0" python NPP_completion/train.py --datadir "${detected_path}/${name}" --basedir ./results --p_topk 3
+    CUDA_VISIBLE_DEVICES="1" python NPP_proposal/search.py --datadir $input_file --outdir $detected_path
+    CUDA_VISIBLE_DEVICES="1" python NPP_completion/train.py --datadir "${detected_path}/${name}" --basedir ./results --p_topk 3
 done
