@@ -237,3 +237,68 @@ def load_NPP_segmentation(args):
 
 
     return img, period_mask, non_period_mask, blur_img, valid_mask, selected_shifts, selected_angles, selected_periods
+
+
+
+
+def load_NPP_remapping(args):
+    import NPP_remapping.blur_detection as blur_detection
+
+    '''
+    load data information
+    '''
+    data_info = load_data(args)
+
+    '''
+     read images
+    '''
+    img = cv2.imread(data_info['fpath_gt_img'])[:, :, ::-1]
+    valid_mask = cv2.imread(data_info['fpath_valid_mask'], 0)[:, :, None]
+
+    '''
+    detect the blurry region in the image 
+    '''
+    _, clear_mask = blur_detection.get_blur_map(img, thresh=args.blur_thresh)
+
+    clear_mask = clear_mask[:, :, None] * valid_mask / 255
+
+    # visualization
+    name = args.datadir.split('/')[-1]
+    expname = f'{args.expname}_top{args.p_topk}'
+    savedir = f'{args.basedir}/{expname}/{name}/blur_mask.png'
+    os.makedirs(os.path.dirname(savedir), exist_ok=True)
+    plt.imsave(savedir, clear_mask[..., 0])
+
+    img = img / 255.
+    valid_mask = valid_mask / 255.
+    clear_mask = clear_mask / 255.
+
+    '''
+    get pixel coordinate of training (known) and val (unknown)
+    '''
+    train_splits = np.stack(np.nonzero(valid_mask)[:2], axis=1)
+    val_splits = np.stack(np.nonzero(clear_mask * valid_mask)[:2], axis=1)
+    i_split = [train_splits, val_splits]
+
+    img = img[None]
+    clear_mask = clear_mask[None]
+    valid_mask = valid_mask[None]
+
+    '''
+    load detected periodicity
+    '''
+    selected_shifts, selected_angles, selected_periods = \
+        data_info['selected_shifts'],  data_info['selected_angles'],  data_info['selected_periods']
+    # use top K periodicity
+    selected_shifts = selected_shifts[:args.p_topk]
+    selected_angles = selected_angles[:args.p_topk]
+    selected_periods = selected_periods[:args.p_topk]
+
+    '''
+     calculate patch size 
+     '''
+    max_period = max(selected_periods[0])
+    args.patch_size = int(np.clip(max_period + (32 - max_period % 32), a_min=64, a_max=160))
+
+
+    return img, clear_mask, valid_mask, i_split, selected_shifts, selected_angles, selected_periods

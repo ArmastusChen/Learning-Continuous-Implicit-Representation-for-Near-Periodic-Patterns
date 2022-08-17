@@ -72,7 +72,7 @@ def weights_init_normal(m):
 
 
 
-def create_npp_net(args, selected_angles, selected_periods, res, percep_net, is_search=False):
+def create_npp_net(args, selected_angles, selected_periods, res, percep_net, is_search=False, style_net=None):
     """Instantiate NPP-Net's MLP model.
     Args:
         args: arguments
@@ -141,15 +141,21 @@ def create_npp_net(args, selected_angles, selected_periods, res, percep_net, is_
         model.apply(weights_init_normal)
 
     # add trainable params for adaptive robust pixel loss
-    robust_percep_param = []
     grad_vars = list(model.parameters())  + list(adaptive_pix.parameters())
-
 
     # add trainable params for adaptive robust perceptual loss
     if percep_net is not None and args.use_adaptive_perceptual_loss:
+        robust_percep_param = []
         for adaptive in percep_net.adaptive_perceps:
             robust_percep_param += list(adaptive.parameters())
         grad_vars += robust_percep_param
+
+    # add trainable params for adaptive robust style loss
+    if style_net is not None and args.use_adaptive_style_loss:
+        robust_style_param = []
+        for adaptive in style_net.adaptives:
+            robust_style_param += list(adaptive.parameters())
+        grad_vars += robust_style_param
 
     network_query_fn = lambda inputs, inputs_periodic, network_fn : run_network(inputs, inputs_periodic, network_fn,
                                                                 netchunk=args.netchunk)
