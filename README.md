@@ -16,6 +16,7 @@ pip install -r requirements.txt
 * models:  helper functions for model
 * options: arguments for training. 
 * NPP_completion: implementation for completion task. 
+* NPP_segmentation: implementation for segmentation task. 
 * NPP_proposal: implementation for top-K periodicity proposal.
 
 
@@ -29,4 +30,20 @@ bash run_completion.sh
 
 This script first searches the periodicity of the image, saved in "data/completion/detected". 
 Then it performs image completion, generating the outputs in "results/completion_top3".
+
+
+
+
+### NPP Segmentation
+
+Run all examples in the "data/segmentation/input" using the following command.
+
+```
+bash run_segmentation.sh
+```
+
+This script first searches the periodicity of the image, saved in "data/segmentation/detected". 
+Then it performs image segmentation, generating the outputs in "results/segmentation_top3". 
+
+
 
