@@ -75,7 +75,8 @@ class config_parser():
         parser.add_argument("--invalid_ratio", type=float, default=0.3,
                             help='threshold to filter invalid real patches')
 
-        parser.add_argument("--use_adaptive_perceptual_loss", action='store_false')
+        parser.add_argument("--use_adaptive_perceptual_loss", action='store_false',
+                            help='whether to use adaptive of perceptual loss')
         parser.add_argument("--no_pix_loss", action='store_true', help='do not use pixel loss')
         parser.add_argument("--no_reg_sampling", action='store_true', help='do not use periodicity-based patch '
                                                                            'sampling (random patch sampling instead)')
@@ -116,7 +117,7 @@ class config_parser():
                             help='channels per layer')
 
         parser.add_argument("--N_rand", type=int, default=32*32*2,
-                            help='batch size (number of random rays per gradient step)')
+                            help='batch size for pixel loss (number of pixel used for training per iteration)')
 
         parser.add_argument("--gray_only", action='store_false',
                             help='only use grayscale image as image feature for periodicity detection')
@@ -142,4 +143,83 @@ class config_parser():
         parser.add_argument("--N_iters", type=int, default=300,
                             help='Number of iterations to evaluate each periodicity')
 
+        return parser
+
+
+
+
+    def segmentation_config(self):
+        parser = self.parser
+
+        parser.add_argument("--expname", type=str, default='segmentation',
+                            help='experiment name')
+        parser.add_argument("--basedir", type=str, default='./results',
+                            help='where to store logs')
+        parser.add_argument("--datadir", type=str, default='data/segmentation/detected/20150911134909-9f80de08',
+                            help='input data directory')
+
+        # training options
+        parser.add_argument("--netdepth", type=int, default=8,
+                            help='layers in network')
+        parser.add_argument("--netwidth", type=int, default=512,
+                            help='channels per layer')
+
+        parser.add_argument("--N_rand", type=int, default=32 * 32 * 8,
+                            help='batch size for pixel loss (number of pixel used for training per iteration)')
+
+        parser.add_argument("--patch_num", type=int, default=2,
+                            help='batch size for patch loss (number of patch used for training per iteration)')
+        parser.add_argument("--num_real_patch_per_sample", type=int, default=3,
+                            help='number of real (known or gt) patches that are sampled '
+                                 'for a specific fake (predicted) patch')
+        parser.add_argument("--patch_size_decay", type=int, default=2000,
+                            help='decrease patch size every patch_size_decay iterations')
+        parser.add_argument("--invalid_as_unknown", action='store_true',
+                            help='whether to treat invalid region as unknown region')
+
+        parser.add_argument("--p_topk", type=int, default=3,
+                            help='top K periodicity')
+        parser.add_argument("--invalid_ratio", type=float, default=0.3,
+                            help='threshold to filter invalid real patches')
+
+        parser.add_argument("--use_adaptive_perceptual_loss", action='store_false')
+        parser.add_argument("--no_pix_loss", action='store_true', help='do not use pixel loss')
+        parser.add_argument("--no_reg_sampling", action='store_true', help='do not use periodicity-based patch '
+                                                                           'sampling (random patch sampling instead)')
+        parser.add_argument("--use_contextual_loss", action='store_false', help='use contextual loss')
+        parser.add_argument("--use_perceptual_loss", action='store_true', help='use perceptual loss')
+        parser.add_argument("--use_comp", action='store_false', help='compose known regions in the input region to '
+                                                                     'predicted patches if applicable')
+        parser.add_argument("--use_patch_weight", action='store_true', help='assign weight for sampled patches '
+                                                                            'based on the distance')
+
+        parser.add_argument("--contextual_weight", type=float, default=0.005,
+                            help='weight of contextual loss')
+        parser.add_argument("--perceptual_weight", type=float, default=0.001,
+                            help='weight of perceptual loss')
+
+        # logging/saving options
+        parser.add_argument("--N_iters", type=int, default=601,
+                            help='Number of iteration for trianing')
+        parser.add_argument("--i_print", type=int, default=500,
+                            help='frequency of console printout and metric logging')
+        parser.add_argument("--i_testset", type=int, default=600,
+                            help='frequency of testset saving')
+
+        # initial segmentation options
+        parser.add_argument("--nb_classes", type=int, default=3,
+                            help='number of classes for initial segmentation')
+        parser.add_argument("--sp_size", type=int, default=20,
+                            help='initial size of a superpixel(meaning edge length for initial segmentation')
+        parser.add_argument("--sp_regul", type=float, default=0.1,
+                            help='regularisation in range(0;1) where "0" gives elastic '
+                                 'and "1" nearly square slic for initial segmentation')
+
+        # Criterion
+        parser.add_argument("--l1_thresh", type=float, default=0.15,
+                            help='threshold for l1 criterion')
+        parser.add_argument("--lpips_thresh", type=float, default=0.3,
+                            help='threshold for lpips criterion')
+        parser.add_argument("--lpips_layers", type=int, default=1,
+                            help='number of layers of LPIPS to be considered when computing the error')
         return parser

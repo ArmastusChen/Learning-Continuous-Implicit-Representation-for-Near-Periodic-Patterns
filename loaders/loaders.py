@@ -1,5 +1,10 @@
-from utils.miscs import  *
+import os
+
+import matplotlib.pyplot as plt
+
 from NPP_proposal.feature_searching import *
+import json
+from utils.ops import  *
 
 def load_NPP_proposal(args):
     file_dir = args.datadir
@@ -59,12 +64,7 @@ def load_NPP_proposal(args):
     return img, pseudo_mask, mask, masked_img, valid_mask, i_split, selected_shifts, selected_angles, selected_periods
 
 
-
-
-def load_NPP_completion(args):
-    '''
-    load data information
-    '''
+def load_data(args):
     data_info_tmp = [json.loads(x.rstrip()) for x in open(f'{args.datadir}/config.odgt', 'r')][0]
     data_info = {}
     for key in data_info_tmp:
@@ -76,6 +76,14 @@ def load_NPP_completion(args):
             data_info[key] = f'{args.datadir}/{f_name}'
         else:
             data_info[key] = data_info_tmp[key]
+
+    return data_info
+
+def load_NPP_completion(args):
+    '''
+    load data information
+    '''
+    data_info = load_data(args)
 
     '''
     read images
@@ -127,3 +135,105 @@ def load_NPP_completion(args):
 
     return img, mask, masked_img, valid_mask, i_split, selected_shifts, selected_angles, selected_periods
 
+
+
+
+def load_NPP_segmentation(args):
+    import NPP_segmentation.imsegm.pipelines as segm_pipe
+
+    '''
+    load data information
+    '''
+    data_info = load_data(args)
+
+    '''
+    read images
+    '''
+    img = cv2.imread(data_info['fpath_gt_img'])[:, :, ::-1]
+    valid_mask = cv2.imread(data_info['fpath_valid_mask'], 0)
+
+    valid_mask = valid_mask / 255.
+
+    # we use blur image for training because we don't want to consider local details
+    blur_img = blur_with_mask(img, valid_mask[..., None] )
+    blur_img = blur_img / 255.
+
+
+    '''
+    Do the coarse semantic segmentation for initial periodic region estimation.
+    '''
+    # valid mask
+    mask_for_seg = valid_mask > 0.5
+    nb_classes, sp_size, sp_regul = args.nb_classes, args.sp_size, args.sp_regul
+
+    # estimate a model from the image and return it as result
+    dict_features = {'color': ['mean', 'median', 'meanGrad']}
+    model, _ = segm_pipe.estim_model_classes_group([img], nb_classes, sp_size=sp_size, sp_regul=sp_regul, mask=mask_for_seg,
+                                                   dict_features=dict_features, pca_coef=None, model_type='GMM')
+
+    # complete pipe-line for segmentation using superpixels, extracting features and graphCut segmentation
+    dict_debug = {}
+    seg, _ = segm_pipe.segment_color2d_slic_features_model_graphcut(img, model, mask=mask_for_seg, sp_size=sp_size,
+                                                                    sp_regul=sp_regul,
+                                                                    dict_features=dict_features, gc_regul=2,
+                                                                    gc_edge_type='features', debug_visual=dict_debug)
+
+    # increase segment label by 1, and 0 refers to invalid region now
+    seg = (seg + 1) * valid_mask
+    seg = np.uint8(seg)
+
+
+    '''
+    Generate non-periodic and periodic region based on initial coarse segmentation
+    '''
+    h, w = seg.shape
+    # crop the segmentation result, and treat the label with largest number of pixels as periodic class
+    period_label = np.bincount(seg[h//4:h//4 * 3, w//4: w//4 * 3].reshape(-1))[1:].argmax() + 1
+
+    # other labels as non-periodic region
+    other_labels = []
+    for label_idx in range(1, nb_classes + 1):
+        if not label_idx == period_label:
+            other_labels.append(label_idx)
+
+    # mask of non-periodic region
+    non_period_mask = np.zeros_like(valid_mask[..., None])
+    for label_idx in other_labels:
+        non_period_mask[seg == label_idx] += 1
+
+    # mask of periodic region
+    period_mask = seg == period_label
+
+    # visualize the initial segmentation
+    name = args.datadir.split('/')[-1]
+    expname = f'{args.expname}_top{args.p_topk}'
+    savedir = f'{args.basedir}/{expname}/{name}/segment_init.png'
+    os.makedirs(os.path.dirname(savedir), exist_ok=True)
+    cv2.imwrite(savedir, np.uint8((non_period_mask > 0).astype(np.float) * 255))
+
+    img = img / 255.
+
+    img = img[None]
+    blur_img = blur_img[None]
+    period_mask = period_mask[None, ..., None]
+    non_period_mask = non_period_mask[None]
+    valid_mask = valid_mask[None, ..., None]
+
+    '''
+    load detected periodicity
+    '''
+    selected_shifts, selected_angles, selected_periods = data_info['selected_shifts'],  data_info['selected_angles'],  data_info['selected_periods']
+
+    # use top K periodicity
+    selected_shifts = selected_shifts[:args.p_topk]
+    selected_angles = selected_angles[:args.p_topk]
+    selected_periods = selected_periods[:args.p_topk]
+
+    '''
+    calculate patch size 
+    '''
+    max_period = max(selected_periods[0])
+    args.patch_size = int(np.clip(max_period + (32 - max_period % 32), a_min=64, a_max=160))
+
+
+    return img, period_mask, non_period_mask, blur_img, valid_mask, selected_shifts, selected_angles, selected_periods
