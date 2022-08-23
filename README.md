@@ -1,5 +1,6 @@
 # Learning Continuous Implicit Representation for Near-Periodic Patterns (ECCV 2022)
 
+![](teaser.jpg)
 
 ## Get started
 You can set up the environment with all dependencies like so:
