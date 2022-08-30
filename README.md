@@ -5,7 +5,7 @@
 [Bowei Chen](https://armastuschen.github.io/),
 [Tiancheng Zhi](https://tiancheng-zhi.github.io/),
 [Martial Hebert](http://www.cs.cmu.edu/~hebert/),
-[Srinivasa Narasimhan](http://www.cs.cmu.edu/~srinivas),
+[Srinivasa Narasimhan](http://www.cs.cmu.edu/~srinivas)
 
 Carnegie Mellon University
 
