@@ -1,5 +1,5 @@
 # Learning Continuous Implicit Representation for Near-Periodic Patterns (ECCV 2022)
-### [Project Page](https://armastuschen.github.io/projects/NPP_Net/) | [Paper](https://arxiv.org/abs/2208.12278) | [Bibtex](https://armastuschen.github.io/projects/NPP_Net/static/Bibtex.bib) 
+### [Project Page](https://armastuschen.github.io/projects/NPP_Net/) | [Paper](https://arxiv.org/abs/2208.12278) | [Bibtex](https://armastuschen.github.io/projects/NPP_Net/static/bibtex.bib) 
 
 
 [Bowei Chen](https://armastuschen.github.io/),
